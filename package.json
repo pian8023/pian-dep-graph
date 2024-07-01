@@ -13,7 +13,11 @@
     "commitlint": "commitlint --config commitlint.config.cjs -e -V"
   },
   "dependencies": {
-    "@antv/g6": "^5.0.1",
+    "@antv/g6": "^4.8.24",
+    "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.6.8",
+    "element-plus": "^2.7.1",
+    "insert-css": "^2.0.0",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
     "vue-router": "^4.3.3"
