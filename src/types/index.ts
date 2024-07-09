@@ -1,19 +1,3 @@
-export interface dataNode {
-  id: string
-  x: number
-  y: number
-}
-
-export interface dataEdge {
-  source: string
-  target: string
-}
-
-export interface graghData {
-  nodes: dataNode[]
-  edges: dataEdge[]
-}
-
 type DepTypes = 'dependencies' | 'devDependencies' | 'peerDependencies'
 
 export interface DepGraphNode {
@@ -24,4 +8,8 @@ export interface DepGraphNode {
   dependence: { name: string; version?: string; depType: DepTypes }[]
 }
 
-export type DepGraph = DepGraphNode[]
+export interface DepGraph {
+  nodes: DepGraphNode[]
+  dependencies?: string[]
+  devDependencies?: string[]
+}

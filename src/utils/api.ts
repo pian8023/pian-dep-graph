@@ -29,9 +29,11 @@ axiosInstance.interceptors.response.use(
   }
 )
 
-export const getGraphNodes = async (params: string) => {
+export const getGraphNodes = async (name: string) => {
   const res = await axiosInstance.get('/graph', {
-    params,
+    params: {
+      name,
+    },
   })
   return res.data.data
 }

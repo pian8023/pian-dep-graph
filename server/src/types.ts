@@ -5,10 +5,20 @@ export interface DepGraphNode {
   import: boolean // 是否import的
   version?: string
   specifier?: string
-  dependence: { name: string; version?: string; depType: DepTypes }[]
+  dependence: dependence[]
 }
 
-export type DepGraph = DepGraphNode[]
+export interface dependence {
+  name: string
+  version?: string
+  depType: DepTypes
+}
+
+export interface DepGraph {
+  nodes: DepGraphNode[]
+  dependencies?: string[]
+  devDependencies?: string[]
+}
 
 // Lockfile缺少部分
 export interface pnpmLockYaml {
@@ -19,4 +29,11 @@ export interface pnpmLockYaml {
 export interface PackageSpec {
   specifier: string
   version: string
+}
+
+export interface LockGraphOptions {
+  lockPath: string
+  queryName?: string
+  depth?: number
+  savePath?: string
 }

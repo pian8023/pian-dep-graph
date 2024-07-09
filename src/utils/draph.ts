@@ -1,6 +1,8 @@
-import G6, { Graph, registerNode, type GraphData, type NodeConfig, type EdgeConfig } from '@antv/g6'
+import G6, { Graph, type GraphData, type NodeConfig, type EdgeConfig } from '@antv/g6'
 import { type DepGraph } from '@/types'
 import insertCss from 'insert-css'
+
+let graph: Graph | null = null
 
 insertCss(`
   .g6-component-tooltip {
@@ -21,7 +23,7 @@ const tooltip = new G6.Tooltip({
   // 允许出现 tooltip 的 item 类型
   itemTypes: ['node', 'edge'],
   // 自定义 tooltip 内容
-  getContent: (e) => {
+  getContent: (e: any) => {
     const outDiv = document.createElement('div')
     outDiv.style.width = 'fit-content'
     outDiv.style.height = 'fit-content'
@@ -79,96 +81,79 @@ const options = {
   plugins: [tooltip],
 }
 
-export const renderGraph = (data: DepGraph, element: HTMLElement) => {
-  registerNode(
-    'background-animate',
-    {
-      afterDraw(cfg, group) {
-        const r = cfg.size / 2
-        const back1 = group.addShape('circle', {
-          zIndex: -3,
-          attrs: {
-            x: 0,
-            y: 0,
-            r,
-            fill: cfg.color,
-            opacity: 0.6,
-          },
-          name: 'back1-shape',
-        })
-        const back2 = group.addShape('circle', {
-          zIndex: -2,
-          attrs: {
-            x: 0,
-            y: 0,
-            r,
-            fill: cfg.color,
-            opacity: 0.6,
-          },
-          name: 'back2-shape',
-        })
-        const back3 = group.addShape('circle', {
-          zIndex: -1,
-          attrs: {
-            x: 0,
-            y: 0,
-            r,
-            fill: cfg.color,
-            opacity: 0.6,
-          },
-          name: 'back3-shape',
-        })
-        group.sort()
-        back1.animate(
-          {
-            r: r + 10,
-            opacity: 0.1,
-          },
-          {
-            duration: 3000,
-            easing: 'easeCubic',
-            delay: 0,
-            repeat: true,
-          }
-        )
-        back2.animate(
-          {
-            r: r + 10,
-            opacity: 0.1,
-          },
-          {
-            duration: 3000,
-            easing: 'easeCubic',
-            delay: 1000,
-            repeat: true,
-          }
-        )
-        back3.animate(
-          {
-            r: r + 10,
-            opacity: 0.1,
-          },
-          {
-            duration: 3000,
-            easing: 'easeCubic',
-            delay: 2000,
-            repeat: true,
-          }
-        )
-      },
-    },
-    'circle'
-  )
+const getGraphData = (data: DepGraph['nodes']): GraphData => {
+  console.log('data: ', data)
+  const nodes: NodeConfig[] = []
+  const edges: EdgeConfig[] = []
 
-  const graph = new Graph({
-    container: element.id,
-    width: element.scrollWidth,
-    height: element.scrollHeight,
-    ...options,
+  for (const item of data) {
+    let { name } = item
+    const { dependence } = item
+
+    // package-lock.json文件下packages对象第一个key为'',这里取个别名
+    if (name === '') {
+      name = 'pkgLockJson'
+    }
+    nodes.push({
+      id: name,
+      label: name,
+      name: name,
+      // color: '#40a9ff',
+      size: 24,
+    })
+
+    if (dependence) {
+      dependence.forEach((dep) => {
+        edges.push({
+          source: name,
+          target: dep.name,
+        })
+      })
+    }
+  }
+
+  return {
+    nodes,
+    edges,
+  }
+}
+
+// 确保每个边的源和目标节点都存在于节点列表中
+const validateGraphData = (data: GraphData) => {
+  const nodesMap = new Map(data.nodes!.map((node) => [node.id, node]))
+
+  data.edges = data.edges!.filter((edge) => {
+    const sourceNode = nodesMap.get(edge.source!)
+    const targetNode = nodesMap.get(edge.target!)
+    if (!sourceNode || !targetNode) {
+      // console.error(`Invalid edge found: ${JSON.stringify(edge)}`)
+      return false
+    }
+    return true
   })
-  const graphData = changeData(data)
-  graph.data(graphData)
-  graph.render()
+
+  return data
+}
+
+export const renderGraph = (nodes: DepGraph['nodes'], element: HTMLElement) => {
+  if (graph) {
+    // graph.destroy()  不使用destroy()，使用changeData()来更新数据以确保tooltip插件正常工作
+    const graphData = getGraphData(nodes)
+    const validatedData = validateGraphData(graphData)
+    graph.changeData(validatedData)
+    graph.layout()
+    graph.render()
+  } else {
+    graph = new Graph({
+      container: element.id,
+      width: element.scrollWidth,
+      height: element.scrollHeight,
+      ...options,
+    })
+    const graphData = getGraphData(nodes)
+    graph.data(graphData)
+    graph.render()
+  }
 
   if (typeof window !== 'undefined')
     window.onresize = () => {
@@ -176,32 +161,4 @@ export const renderGraph = (data: DepGraph, element: HTMLElement) => {
       if (!element || !element.scrollWidth || !element.scrollHeight) return
       graph.changeSize(element.scrollWidth, element.scrollHeight)
     }
-}
-
-export const changeData = (data: DepGraph): GraphData => {
-  const nodes: NodeConfig[] = []
-  const edges: EdgeConfig[] = []
-
-  for (const item of data) {
-    nodes.push({
-      id: item.name,
-      label: item.name,
-      name: item.name,
-      // type: 'background-animate',
-      // color: '#40a9ff',
-      size: 24,
-    })
-
-    item.dependence.forEach((dep) => {
-      edges.push({
-        source: item.name,
-        target: dep.name,
-      })
-    })
-  }
-
-  return {
-    nodes,
-    edges,
-  }
 }
