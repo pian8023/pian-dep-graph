@@ -82,7 +82,6 @@ const options = {
 }
 
 const getGraphData = (data: DepGraph['nodes']): GraphData => {
-  console.log('data: ', data)
   const nodes: NodeConfig[] = []
   const edges: EdgeConfig[] = []
 
@@ -102,18 +101,25 @@ const getGraphData = (data: DepGraph['nodes']): GraphData => {
       size: 24,
     })
 
-    if (dependence) {
-      dependence.forEach((dep) => {
+    dependence?.forEach((dep) => {
+      const edge = edges.find((e) => e.source === name && e.target === dep.name)
+      if (!edge) {
+        nodes.push({
+          id: dep.name,
+          label: dep.name,
+          name: dep.name,
+          size: 24,
+        })
         edges.push({
           source: name,
           target: dep.name,
         })
-      })
-    }
+      }
+    })
   }
 
   return {
-    nodes,
+    nodes: deduplicateByName(nodes),
     edges,
   }
 }
@@ -133,6 +139,18 @@ const validateGraphData = (data: GraphData) => {
   })
 
   return data
+}
+
+const deduplicateByName = (nodes: NodeConfig[]) => {
+  const seen = new Set()
+  return nodes.reduce((acc: NodeConfig[], item) => {
+    const keyValue = item['name']
+    if (!seen.has(keyValue)) {
+      seen.add(keyValue)
+      acc.push(item)
+    }
+    return acc
+  }, [])
 }
 
 export const renderGraph = (nodes: DepGraph['nodes'], element: HTMLElement) => {
