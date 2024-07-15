@@ -88,6 +88,7 @@ const parsePkgByReg = (pkgKey: string) => {
   }
 }
 
+// 说实话，这几个文件的代码结构还挺像的
 export class PnpmLockGraph extends BaseDepGraph {
   private filepath: string
   private savepath?: string
