@@ -16,6 +16,7 @@ export const graphController = async (ctx: Context) => {
   }
 
   if (choice === 'lockfile') {
+    // 这里一大坨，很适合改成 switch-case
     if (filepath?.endsWith('pnpm-lock.yaml')) {
       const graph = new PnpmLockGraph({
         filepath,

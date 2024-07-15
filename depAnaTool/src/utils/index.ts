@@ -16,6 +16,7 @@ export const deduplicateByName = (arr: DepGraph['nodes']) => {
 }
 
 // 关键字筛选
+// 不要出现 any
 export const searchByName = (data: any, keyword: string) => {
   return data
     .map((item: { name: string | string[]; dependence: any }) => {
@@ -43,7 +44,9 @@ export const saveJsonFile = (data: any, lockPath: string, filePath: string) => {
   const graphFilePath = path.join(savePath, `${path.basename(lockPath)}.json`)
   const json = JSON.stringify(data, null, 2) // 缩进为2
 
+  // 所有文件操作改为异步
   if (!existsSync(savePath)) {
+    // mkdir 带了recursive 参数的话，其实可以不用提前判断目录是否存在
     mkdirSync(savePath, { recursive: true })
   }
 
@@ -56,6 +59,10 @@ export const saveJsonFile = (data: any, lockPath: string, filePath: string) => {
 }
 
 // 解析node_modules后保存文件
+// 这个函数跟上面的 saveJsonFile 有什么区别？
+// 看起来只是保存的文件名不一样？
+// 那。。。为啥不把文件名改成参数
+// don't repeat yourself
 export const saveModulesFile = (data: any, filePath: string) => {
   const savePath = path.resolve(process.cwd(), filePath)
   const graphFilePath = path.join(savePath, 'modulesData.json')

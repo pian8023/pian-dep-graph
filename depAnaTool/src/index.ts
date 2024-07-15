@@ -51,6 +51,9 @@ const startNodeServer = (options: NodeJS.ProcessEnv) => {
     const pkgJsonContent = readFileSync('./package.json', 'utf8')
     const pkgJson = JSON.parse(pkgJsonContent)
     if (pkgJson.scripts.dev) {
+      // 这个动作其实很不好：
+      // 1. 需要启动新的进程来 host server
+      // 2. 环境参数相当于都通过 process.env 传递了，这就没法使用 ts 做类型检查了
       const nodeSever = exec(`pnpm run dev`, {
         cwd: process.cwd(),
         env: { ...process.env, ...options },
@@ -64,9 +67,14 @@ const startNodeServer = (options: NodeJS.ProcessEnv) => {
         return
       }
 
+      // 你在日常编码中，不要直接依赖文件结构
+      // 因为目录结构频繁变动，且没有有效的检测措施，容易出错
       const webPkgJson = JSON.parse(readFileSync('../package.json', 'utf8'))
       if (webPkgJson.scripts.dev) {
         setTimeout(() => {
+          // 这里其实也不好看
+          // 应该是，web 应用也导出 start 函数，之后在这里直接调用函数启动服务；
+          // 具体实现可以看看教程项目
           const frontendServer = exec(`pnpm run dev`, { cwd: path.resolve(process.cwd(), '../') })
           frontendServer.stdout?.pipe(process.stdout)
           frontendServer.stderr?.pipe(process.stderr)
@@ -112,6 +120,7 @@ export const main = async () => {
       const { filepath, depth, savepath } = options
       const initOptions = await inquirer.prompt(InitPrompts)
 
+      // 这段 if-else 的代码长的好像啊，感觉可以优化下
       if (initOptions.initChoice === 'node_modules') {
         const spinner = ora(`start parsing node_modules`)
         spinner.start()
@@ -119,6 +128,7 @@ export const main = async () => {
           await startNodeServer({
             depth,
             savepath,
+            // 这是，还支持直接解析 node_modules 目录？
             choice: 'node_modules',
           })
           spinner.succeed(`parse node_modules succeed`)
