@@ -6,7 +6,10 @@ export enum HttpStatus {
 }
 
 export class HttpError extends Error {
-  constructor(public code: HttpStatus, message: string) {
-    super(message);
+  constructor(
+    public code: HttpStatus,
+    message: string
+  ) {
+    super(message)
   }
 }

@@ -39,3 +39,10 @@ export interface modulesGraphOptions {
   depth?: number
   savepath?: string
 }
+
+export interface commandParams {
+  depth?: number
+  filepath?: string
+  savepath: string
+  choice: 'node_modules' | 'lockfile'
+}

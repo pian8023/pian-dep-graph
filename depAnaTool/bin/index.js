@@ -3,6 +3,7 @@
 
 require('sucrase/register/ts')
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { main } = require('../src/index')
 
 main()

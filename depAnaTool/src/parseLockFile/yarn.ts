@@ -1,9 +1,9 @@
 import path from 'path'
-import { readFileSync } from 'fs-extra'
+import { readFile } from 'fs-extra'
 import { parse } from '@yarnpkg/lockfile'
 import { BaseDepGraph } from './base'
 import { deduplicateByName, saveJsonFile } from '../utils'
-import { type DepGraph, DepGraphNode, LockGraphOptions } from '../types'
+import { DepGraph, DepGraphNode, LockGraphOptions } from '../types'
 
 const parseObject = (depDef: any) => {
   const { dependencies } = depDef
@@ -53,7 +53,7 @@ export class YarnLockGraph extends BaseDepGraph {
     if (!yarnLockPath) {
       throw new Error(`lockPath does not exist or is empty`)
     }
-    const pkgPath = readFileSync(yarnLockPath, 'utf8')
+    const pkgPath = await readFile(yarnLockPath, 'utf8')
     const pkgJson = await parse(pkgPath)
     if (!pkgJson) {
       throw new Error('Cannot parse yarn.lock')
@@ -72,7 +72,7 @@ export class YarnLockGraph extends BaseDepGraph {
 
     const deduplicateRes = deduplicateByName(res)
     if (this.savepath) {
-      saveJsonFile(deduplicateRes, this.filepath, this.savepath)
+      saveJsonFile(deduplicateRes, this.savepath, this.filepath)
     }
 
     return {

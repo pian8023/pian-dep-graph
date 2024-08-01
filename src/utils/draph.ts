@@ -1,6 +1,6 @@
-import G6, { Graph, type GraphData, type NodeConfig, type EdgeConfig } from '@antv/g6'
-import { type DepGraph } from '@/types'
+import G6, { Graph, GraphData, NodeConfig, EdgeConfig } from '@antv/g6'
 import insertCss from 'insert-css'
+import { type DepGraph } from '../../depAnaTool/src/types.ts'
 
 let graph: Graph | null = null
 
@@ -81,6 +81,34 @@ const options = {
   plugins: [tooltip],
 }
 
+// 确保每个边的源和目标节点都存在于节点列表中
+const validateGraphData = (data: GraphData) => {
+  const nodesMap = new Map(data.nodes!.map((node) => [node.id, node]))
+
+  data.edges = data.edges!.filter((edge) => {
+    const sourceNode = nodesMap.get(edge.source!)
+    const targetNode = nodesMap.get(edge.target!)
+    if (!sourceNode || !targetNode) {
+      return false
+    }
+    return true
+  })
+
+  return data
+}
+
+const deduplicateByName = (nodes: NodeConfig[]) => {
+  const seen = new Set()
+  return nodes.reduce((acc: NodeConfig[], item) => {
+    const keyValue = item['name']
+    if (!seen.has(keyValue)) {
+      seen.add(keyValue)
+      acc.push(item)
+    }
+    return acc
+  }, [])
+}
+
 const getGraphData = (data: DepGraph['nodes']): GraphData => {
   const nodes: NodeConfig[] = []
   const edges: EdgeConfig[] = []
@@ -97,7 +125,6 @@ const getGraphData = (data: DepGraph['nodes']): GraphData => {
       id: name,
       label: name,
       name: name,
-      // color: '#40a9ff',
       size: 24,
     })
 
@@ -122,35 +149,6 @@ const getGraphData = (data: DepGraph['nodes']): GraphData => {
     nodes: deduplicateByName(nodes),
     edges,
   }
-}
-
-// 确保每个边的源和目标节点都存在于节点列表中
-const validateGraphData = (data: GraphData) => {
-  const nodesMap = new Map(data.nodes!.map((node) => [node.id, node]))
-
-  data.edges = data.edges!.filter((edge) => {
-    const sourceNode = nodesMap.get(edge.source!)
-    const targetNode = nodesMap.get(edge.target!)
-    if (!sourceNode || !targetNode) {
-      // console.error(`Invalid edge found: ${JSON.stringify(edge)}`)
-      return false
-    }
-    return true
-  })
-
-  return data
-}
-
-const deduplicateByName = (nodes: NodeConfig[]) => {
-  const seen = new Set()
-  return nodes.reduce((acc: NodeConfig[], item) => {
-    const keyValue = item['name']
-    if (!seen.has(keyValue)) {
-      seen.add(keyValue)
-      acc.push(item)
-    }
-    return acc
-  }, [])
 }
 
 export const renderGraph = (nodes: DepGraph['nodes'], element: HTMLElement) => {

@@ -4,8 +4,9 @@ import chalk from 'chalk'
 import figlet from 'figlet'
 import inquirer from 'inquirer'
 import { Command } from 'commander'
-import { exec } from 'child_process'
-import { existsSync, lstatSync, readFileSync } from 'fs-extra'
+import { existsSync, lstatSync } from 'fs-extra'
+import { bootstrap } from './app'
+import { startWeb } from '../../src/utils/start'
 
 const COMMAND_NAME = 'depAnaTool-cli'
 const InitPrompts = [
@@ -46,38 +47,6 @@ const validateDepth = (val: string) => {
   return parsedVal
 }
 
-const startNodeServer = (options: NodeJS.ProcessEnv) => {
-  try {
-    const pkgJsonContent = readFileSync('./package.json', 'utf8')
-    const pkgJson = JSON.parse(pkgJsonContent)
-    if (pkgJson.scripts.dev) {
-      const nodeSever = exec(`pnpm run dev`, {
-        cwd: process.cwd(),
-        env: { ...process.env, ...options },
-      })
-      // 将子进程的输出流导向父进程的输出流
-      nodeSever.stdout?.pipe(process.stdout)
-      nodeSever.stderr?.pipe(process.stderr)
-
-      // 传入后不再打开网页，只是将依赖关系以 JSON 形式存储到用户指定的文件
-      if (options.savepath) {
-        return
-      }
-
-      const webPkgJson = JSON.parse(readFileSync('../package.json', 'utf8'))
-      if (webPkgJson.scripts.dev) {
-        setTimeout(() => {
-          const frontendServer = exec(`pnpm run dev`, { cwd: path.resolve(process.cwd(), '../') })
-          frontendServer.stdout?.pipe(process.stdout)
-          frontendServer.stderr?.pipe(process.stderr)
-        }, 1000) // 延迟1秒以确保Node.js服务已经启动
-      }
-    }
-  } catch (error) {
-    console.error(`Failed to read package.json: ${error}`)
-  }
-}
-
 export const main = async () => {
   console.log(
     '\r\n' +
@@ -95,6 +64,7 @@ export const main = async () => {
   program
     .name(COMMAND_NAME)
     .usage(`<command> [options]`)
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     .version(`${COMMAND_NAME}:${require('../package.json').version}`)
 
   // <>必选参数，[]可选参数
@@ -116,11 +86,14 @@ export const main = async () => {
         const spinner = ora(`start parsing node_modules`)
         spinner.start()
         try {
-          await startNodeServer({
+          bootstrap({
             depth,
             savepath,
             choice: 'node_modules',
           })
+          if (!savepath) {
+            startWeb()
+          }
           spinner.succeed(`parse node_modules succeed`)
         } catch (error) {
           spinner.fail(`parse node_modules failed: ${error}`)
@@ -131,14 +104,17 @@ export const main = async () => {
           process.exit(1)
         }
 
-        const spinner = ora(`start parsing ${path.basename(filepath)}: `)
+        const spinner = ora(`start parsing ${path.basename(filepath)}`)
         spinner.start()
         try {
-          await startNodeServer({
+          bootstrap({
             filepath,
             savepath,
             choice: 'lockfile',
           })
+          if (!savepath) {
+            startWeb()
+          }
           spinner.succeed(`parse ${path.basename(filepath)} succeed`)
         } catch (error) {
           spinner.fail(`parse ${path.basename(filepath)} failed: ${error}`)
@@ -150,8 +126,7 @@ export const main = async () => {
     console.error('Unknown command' + obj[0])
   })
 
-  program.on('--help', function () {
-    // 前后两个空行调整格式
+  program.on('--help', () => {
     console.log()
     console.log(`Run ${chalk.cyan(`${COMMAND_NAME} <command> --help`)} for detailed usage of given command.`)
     console.log()

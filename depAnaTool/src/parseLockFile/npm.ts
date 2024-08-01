@@ -2,7 +2,7 @@ import path from 'path'
 import { readJson } from 'fs-extra'
 import { BaseDepGraph } from './base'
 import { deduplicateByName, saveJsonFile } from '../utils'
-import { type DepGraph, DepGraphNode, LockGraphOptions } from '../types'
+import { DepGraph, DepGraphNode, LockGraphOptions } from '../types'
 
 const getDependenceName = (depObj: Record<string, string>) => {
   const list: string[] = []
@@ -79,7 +79,7 @@ export class NpmLockGraph extends BaseDepGraph {
 
     const deduplicateRes = deduplicateByName(res)
     if (this.savepath) {
-      saveJsonFile(deduplicateRes, this.filepath, this.savepath)
+      saveJsonFile(deduplicateRes, this.savepath, this.filepath)
     }
 
     return {

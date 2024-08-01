@@ -2,7 +2,7 @@ import path from 'path'
 import { Lockfile, readWantedLockfile, ProjectSnapshot, PackageSnapshot } from '@pnpm/lockfile-file'
 import { BaseDepGraph } from './base'
 import { deduplicateByName, saveJsonFile } from '../utils'
-import { type DepGraph, pnpmLockYaml, DepGraphNode, LockGraphOptions } from '../types'
+import { DepGraph, pnpmLockYaml, DepGraphNode, LockGraphOptions } from '../types'
 
 const parseImporters = (depDef: ProjectSnapshot) => {
   const { dependencies, devDependencies } = depDef
@@ -166,7 +166,7 @@ export class PnpmLockGraph extends BaseDepGraph {
 
     const deduplicateRes = deduplicateByName(res)
     if (this.savepath) {
-      saveJsonFile(deduplicateRes, this.filepath, this.savepath)
+      saveJsonFile(deduplicateRes, this.savepath, this.filepath)
     }
 
     return {
